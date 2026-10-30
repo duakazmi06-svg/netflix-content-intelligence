@@ -7,9 +7,9 @@ An end-to-end ETL + EDA project: extract Netflix titles from the TMDB API, clean
 | Member | Roll no. | Owns |
 |---|---|---|
 | Dua Raza Kazmi | 2025-AI-200 | Extract + repo (`src/extract.py`, README) |
-| _TBD_ | | Transform + validate (`src/transform.py`, `src/models.py`, tests) |
-| _TBD_ | | Load + pipeline (`src/load.py`, `src/run_pipeline.py`) |
-| _TBD_ | | Deploy + report (`app/`, final `eda.ipynb`, PDF report) |
+| Ibtihaal Zahrah | 2025-AI-197 | Transform + validate (`src/transform.py`, `src/models.py`, tests) |
+| Khadija Anwar | 2025-AI-194 | Load + pipeline (`src/load.py`, `src/run_pipeline.py`) |
+| Amna Waseem | 2025-AI-185 | Deploy + report (`app/`, final `eda.ipynb`, PDF report) |
 
 ## Architecture
 
