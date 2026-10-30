@@ -168,6 +168,7 @@ def tmdb_to_row(item: dict, genres: dict[int, str], extracted_at: str,
         "overview": item.get("overview") or None,
         "source": "tmdb",
         "extracted_at": extracted_at,
+        "date_added": None,  # TMDB does not record when Netflix added a title
     }
     if detail:
         if is_movie:
@@ -251,6 +252,10 @@ def extract_kaggle(path: Path = KAGGLE_PATH) -> tuple[pd.DataFrame, list[dict]]:
         "overview": src["description"],
         "source": "kaggle",
         "extracted_at": extracted_at,
+        # "September 25, 2021" (some rows have a leading space) -> "2021-09-25"
+        "date_added": pd.to_datetime(src["date_added"].astype("string").str.strip(),
+                                     format="%B %d, %Y", errors="coerce")
+                        .dt.strftime("%Y-%m-%d"),
     }, columns=CONTRACT_COLUMNS)
     log.info("Kaggle done: %d titles from %s", len(df), path)
     return finalize(df), src.to_dict(orient="records")
