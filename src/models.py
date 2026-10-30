@@ -29,9 +29,9 @@ class Title(BaseModel):
     release_date: Optional[date] = None           # null is allowed (proposal policy)
     release_year: Optional[int] = Field(default=None, ge=1880, le=2100)
     vote_average: Optional[float] = Field(default=None, ge=0, le=10)  # None = unrated
-    vote_count: int = Field(ge=0)                 # required
-    popularity: float = Field(ge=0)               # required
-    original_language: str = Field(min_length=2, max_length=10)
+    vote_count: Optional[int] = Field(default=None, ge=0)   # optional (Kaggle has none)
+    popularity: Optional[float] = Field(default=None, ge=0)  # optional (Kaggle has none)
+    original_language: Optional[str] = Field(default=None, min_length=2, max_length=10)
     genres: List[str]
     countries: str = Field(min_length=1)
     runtime: Optional[float] = Field(default=None, gt=0)  # null allowed
