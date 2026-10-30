@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Generated data (keep folders, not every run's output)
+data/raw/snapshot_*.json
+data/raw/extracted_*.csv
+!data/raw/extracted_latest.csv
+data/processed/*
+!data/processed/.gitkeep
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/

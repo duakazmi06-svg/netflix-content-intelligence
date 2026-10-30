@@ -1,0 +1,19 @@
+# Core
+pandas>=2.1
+numpy>=1.26
+requests>=2.31
+python-dotenv>=1.0
+pydantic>=2.5
+SQLAlchemy>=2.0
+
+# Analysis & charts
+matplotlib>=3.8
+seaborn>=0.13
+plotly>=5.18
+jupyter>=1.0
+
+# Web app
+streamlit>=1.30
+
+# Tests
+pytest>=7.4
