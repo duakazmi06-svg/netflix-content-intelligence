@@ -89,6 +89,7 @@ def test_empty_tv_date_becomes_none():
     show = df[df["media_type"] == "tv"].iloc[0]
     assert pd.isna(show["release_date"]) and pd.isna(show["release_year"])
     assert show["countries"] == "KR" and pd.isna(show["overview"])
+    assert df["date_added"].isna().all()           # TMDB has no date_added
 
 
 def test_details_fill_runtime_and_countries():
@@ -121,7 +122,7 @@ def test_kaggle_fallback(tmp_path):
         "show_id": ["s1", "s2"], "type": ["Movie", "TV Show"],
         "title": ["Dick Johnson Is Dead", "Blood & Water"], "director": [None, None],
         "cast": [None, None], "country": ["United States", "South Africa, Nigeria"],
-        "date_added": ["September 25, 2021"] * 2, "release_year": [2020, 2021],
+        "date_added": ["September 25, 2021", None], "release_year": [2020, 2021],
         "rating": ["PG-13", "TV-MA"], "duration": ["90 min", "2 Seasons"],
         "listed_in": ["Documentaries", "International TV Shows, TV Dramas"],
         "description": ["a", "b"],
@@ -133,6 +134,7 @@ def test_kaggle_fallback(tmp_path):
     assert df.loc[0, "runtime"] == 90 and pd.isna(df.loc[1, "runtime"])
     assert df.loc[1, "countries"] == "South Africa|Nigeria"
     assert df.loc[1, "genres"] == "International TV Shows|TV Dramas"
+    assert df.loc[0, "date_added"] == "2021-09-25" and pd.isna(df.loc[1, "date_added"])
 
 
 def test_save_outputs(tmp_path):

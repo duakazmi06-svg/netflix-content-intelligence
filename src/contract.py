@@ -27,6 +27,8 @@ CONTRACT_COLUMNS = [
     "overview",           # str    description, or None
     "source",             # str    "tmdb" or "kaggle"
     "extracted_at",       # str    ISO timestamp of the extract run
+    "date_added",         # str    "YYYY-MM-DD" date the title was added to Netflix
+                          #        (Kaggle only; TMDB has no such field, so None)
 ]
 
 # Separator used for multi-valued fields (genres, countries).
