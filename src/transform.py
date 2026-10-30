@@ -83,11 +83,13 @@ def resolve_duplicate_keys(df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
 def clean_text(df: pd.DataFrame) -> pd.DataFrame:
     """Remove stray spaces and standardise text."""
     df = df.copy()
-    df["title"] = df["title"].str.strip()
-    df["overview"] = df["overview"].fillna("").str.strip()
-    df["original_language"] = df["original_language"].str.strip().str.lower()
-    df["genres"] = df["genres"].fillna("")
-    df["countries"] = df["countries"].fillna("")
+    # astype(str) first: an all-empty column loads as float NaN, and .str fails on floats.
+    df["title"] = df["title"].fillna("").astype(str).str.strip()
+    df["overview"] = df["overview"].fillna("").astype(str).str.strip()
+    lang = df["original_language"].fillna("").astype(str).str.strip().str.lower()
+    df["original_language"] = lang.replace("", None)   # empty -> missing, not ""
+    df["genres"] = df["genres"].fillna("").astype(str)
+    df["countries"] = df["countries"].fillna("").astype(str)
     return df
 
 
