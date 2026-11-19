@@ -226,7 +226,7 @@ def transform(raw_path: str | Path = PROJECT_ROOT / LATEST_EXTRACT_PATH,
 
     clean = pd.DataFrame(valid)
     clean["genres"] = clean["genres"].apply(lambda g: "|".join(g))
-    clean = clean[OUTPUT_COLUMNS]
+    clean = clean.reindex(columns=OUTPUT_COLUMNS)
 
     processed_dir = Path(processed_dir)
     os.makedirs(processed_dir, exist_ok=True)
