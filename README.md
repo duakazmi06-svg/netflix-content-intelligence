@@ -1,8 +1,9 @@
 # Netflix Content Intelligence Pipeline
 
-An end-to-end ETL + EDA project: extract Netflix titles from the TMDB API, clean them with pandas, validate every record with Pydantic, load them into a normalized SQLite database, analyze them with 12 visualizations, and publish the results on Render.
+An end-to-end ETL + EDA project: extract Netflix titles from the TMDB API, clean them with pandas, validate every record with Pydantic, load them into a normalized SQLite database, analyze them with 12 visualizations, and publish the results on Streamlit.
 
 **Programming for AI — Project 1 (ETL + EDA Pipeline)**
+**Live app:** https://netflix-content-intelligence-xnfdtut5ooflfk2jet3pse.streamlit.app/
 
 | Member | Roll no. | Owns |
 |---|---|---|
@@ -16,7 +17,7 @@ An end-to-end ETL + EDA project: extract Netflix titles from the TMDB API, clean
 ```
 TMDB API ─┐
           ├─► extract.py ─► transform.py ─► models.py ─► load.py ─► netflix_analysis.db ─► EDA + app/
-Kaggle CSV┘   raw snapshot   clean DataFrame  valid rows   upserts                          (Render)
+Kaggle CSV┘   raw snapshot   clean DataFrame  valid rows   upserts                          (Streamlit)
               (data/raw/)                     + rejection log
 ```
 
@@ -27,7 +28,7 @@ Kaggle CSV┘   raw snapshot   clean DataFrame  valid rows   upserts            
 | 3. Validate | `src/models.py` | valid records + `rejected_records` |
 | 4. Load | `src/load.py` | `netflix_analysis.db` |
 | 5. Analyze | `notebooks/eda.ipynb` | 12 charts + findings |
-| 6. Deploy | `app/` | live Render URL |
+| 6. Deploy | `app/` | live Streamlit URL | https://netflix-content-intelligence-xnfdtut5ooflfk2jet3pse.streamlit.app/
 
 The column format every stage passes along is defined in **`src/contract.py`**. Change it only after telling the whole group.
 
@@ -85,7 +86,7 @@ netflix-content-intelligence/
 │   └── run_pipeline.py
 ├── notebooks/eda.ipynb
 ├── data/raw/  data/processed/
-├── app/                   # Streamlit app for Render
+├── app/                   # Streamlit app 
 ├── tests/
 ├── requirements.txt
 ├── .env.example
