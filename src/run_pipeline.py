@@ -9,6 +9,7 @@ How to run (from the main project folder):
     python src/run_pipeline.py                             # real run (TMDB, else Kaggle)
     python src/run_pipeline.py --source kaggle             # force the Kaggle CSV
     python src/run_pipeline.py --source tmdb --region PK   # TMDB, Pakistan catalog
+    python src/run_pipeline.py --skip-extract --region US  # reuse the saved extract file
 
 What it uses from the team:
     src/extract.py    extract(source, region, max_pages)
@@ -34,14 +35,20 @@ import load  # noqa: E402
 PROCESSED = ROOT / "data" / "processed"
 
 
-def run_real(source, region, max_pages):
+def run_real(source, region, max_pages, skip_extract=False):
     """Use Person 1's extract and Person 2's transform."""
     from src.extract import extract
     from src.transform import transform
 
     t = time.time()
-    raw = extract(source=source, region=region, max_pages=max_pages)
-    print(f"[1/4] Extract   : {len(raw)} rows            ({time.time() - t:.1f}s)")
+    if skip_extract:
+        # Use the file already saved by Person 1 (no API call, no key needed).
+        raw = pd.read_csv(ROOT / "data" / "raw" / "extracted_latest.csv")
+        print(f"[1/4] Extract   : skipped, using data/raw/extracted_latest.csv "
+              f"({len(raw)} rows)")
+    else:
+        raw = extract(source=source, region=region, max_pages=max_pages)
+        print(f"[1/4] Extract   : {len(raw)} rows            ({time.time() - t:.1f}s)")
 
     t = time.time()
     summary = transform()          # also validates every row
@@ -69,14 +76,15 @@ def run_stand_in():
     return len(raw), valid, rejected
 
 
-def run(source="auto", region="US", max_pages=25, stand_in=False, db_path=load.DB_PATH):
+def run(source="auto", region="US", max_pages=25, stand_in=False,
+        skip_extract=False, db_path=load.DB_PATH):
     run_id = load.new_run_id()
     print(f"=== Pipeline run {run_id} ===")
 
     if stand_in:
         rows_extracted, valid, rejected = run_stand_in()
     else:
-        rows_extracted, valid, rejected = run_real(source, region, max_pages)
+        rows_extracted, valid, rejected = run_real(source, region, max_pages, skip_extract)
 
     t = time.time()
     engine = load.get_engine(db_path)
@@ -95,12 +103,15 @@ if __name__ == "__main__":
     ap.add_argument("--source", default="auto", choices=["auto", "tmdb", "kaggle"])
     ap.add_argument("--region", default="US", help="TMDB region code, e.g. US or PK")
     ap.add_argument("--max-pages", type=int, default=25, help="TMDB pages per media type")
+    ap.add_argument("--skip-extract", action="store_true",
+                    help="do not call extract; use data/raw/extracted_latest.csv as it is")
     ap.add_argument("--stand-in", action="store_true",
                     help="use fake steps and the Kaggle CSV (for testing)")
     args = ap.parse_args()
     try:
         run(source=args.source, region=args.region.upper(),
-            max_pages=args.max_pages, stand_in=args.stand_in)
+            max_pages=args.max_pages, stand_in=args.stand_in,
+            skip_extract=args.skip_extract)
     except Exception as err:
         print(f"\nPIPELINE FAILED: {type(err).__name__}: {err}")
         sys.exit(1)

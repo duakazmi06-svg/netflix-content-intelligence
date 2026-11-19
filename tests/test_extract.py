@@ -142,3 +142,18 @@ def test_save_outputs(tmp_path):
     paths = ex.save_outputs(df, raw, "tmdb", "US", raw_dir=tmp_path)
     assert paths["snapshot"].exists() and paths["latest"].exists()
     assert len(pd.read_csv(paths["latest"])) == 3
+
+
+def test_failed_detail_lookup_is_skipped_not_fatal():
+    class FlakyDetails(FakeSession):
+        def get(self, url, params=None, timeout=None):
+            if url.endswith("/movie/102"):
+                raise ex.requests.ConnectionError("internet dropped")
+            return super().get(url, params, timeout)
+    client = ex.TMDBClient(api_key="test", session=FlakyDetails())
+    df, _ = ex.extract_tmdb("US", max_pages=10, with_details=True, client=client)
+    assert len(df) == 3                                   # run still completes
+    m102 = df[(df["id"] == 102) & (df["media_type"] == "movie")].iloc[0]
+    assert pd.isna(m102["runtime"])                       # only that title lacks details
+    m101 = df[(df["id"] == 101) & (df["media_type"] == "movie")].iloc[0]
+    assert m101["runtime"] == 118

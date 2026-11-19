@@ -191,18 +191,31 @@ def extract_tmdb(region: str = "US", max_pages: int = 25, with_details: bool = F
 
     raw: list[dict] = []
     rows: list[dict] = []
+    detail_failures = 0
     for media_type in ("movie", "tv"):
         genres = client.genre_map(media_type)
         items = client.discover(media_type, region, max_pages)
         for i, item in enumerate(items, 1):
-            detail = client.details(media_type, item["id"]) if with_details else None
-            if with_details and i % 50 == 0:
-                log.info("details %s: %d/%d", media_type, i, len(items))
+            detail = None
+            if with_details:
+                # A failed detail lookup (e.g. a short internet drop) only costs
+                # that title's runtime/countries; it must not abort the whole run.
+                try:
+                    detail = client.details(media_type, item["id"])
+                except ExtractError as e:
+                    detail_failures += 1
+                    log.warning("details skipped for %s %s: %s",
+                                media_type, item["id"], str(e).split(":")[0])
+                if i % 50 == 0:
+                    log.info("details %s: %d/%d", media_type, i, len(items))
             raw.append({"item": item, "detail": detail})
             rows.append(tmdb_to_row(item, genres, extracted_at, detail))
 
     if not rows:
         raise ExtractError(f"TMDB returned no Netflix titles for region {region}")
+    if detail_failures:
+        log.warning("%d of %d detail lookups failed; those titles have no runtime "
+                    "and use origin countries only", detail_failures, len(rows))
     log.info("TMDB done: %d titles, %d API calls", len(rows), client.calls)
     return finalize(pd.DataFrame(rows, columns=CONTRACT_COLUMNS)), raw
 
@@ -328,6 +341,8 @@ def main() -> None:
     args = p.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    # urllib3's retry warnings print the full URL, including the api_key; hide them.
+    logging.getLogger("urllib3").setLevel(logging.ERROR)
     try:
         df = extract(args.source, args.region.upper(), args.max_pages, args.details)
     except ExtractError as e:
