@@ -12,43 +12,71 @@ st.set_page_config(page_title="Netflix Content Intelligence", layout="wide")
 st.markdown(
     f"""
     <style>
+     /* Card-style tabs */
+    div[data-baseweb="tab-list"],
+    [data-testid="stTabs"] [role="tablist"] {{
+        gap: 16px !important;
+        background: transparent !important;
+        padding: 8px 0 !important;
+    }}
+
+    button[role="tab"],
+    button[data-baseweb="tab"],
+    [data-testid="stTab"] {{
+        background-color: {pal.CARD} !important;
+        border: 1px solid {pal.BORDER} !important;
+        border-left: 4px solid {pal.NETFLIX_RED} !important;
+        border-radius: 10px !important;
+        padding: 14px 36px !important;
+        height: auto !important;
+        min-width: 140px;
+        justify-content: center;
+    }}
+
+    button[role="tab"] p,
+    button[role="tab"] span,
+    [data-testid="stTab"] p {{
+        color: white !important;
+        font-size: 18px !important;
+        font-weight: 600 !important;
+    }}
+
+    button[role="tab"]:hover,
+    [data-testid="stTab"]:hover {{
+        background-color: {pal.BORDER} !important;
+    }}
+
+    button[role="tab"][aria-selected="true"],
+    [data-testid="stTab"][aria-selected="true"] {{
+        background-color: {pal.NETFLIX_RED} !important;
+        border: 1px solid {pal.NETFLIX_RED} !important;
+    }}
+
+    /* hide the default underline */
+    [data-baseweb="tab-highlight"],
+    [data-baseweb="tab-border"] {{
+        display: none !important;
+    }}
+
+    /* Existing dashboard styling */
     .stApp {{ background: linear-gradient(180deg, {pal.BG_TOP} 0%, {pal.BG_BOTTOM} 100%); background-attachment: fixed; }}
+
     [data-testid="stSidebar"] {{
         background-color: {pal.BG_SIDEBAR};
         border-right: 1px solid {pal.BORDER};
     }}
+
     [data-testid="stMetric"] {{
         background-color: {pal.CARD};
         border-left: 4px solid {pal.NETFLIX_RED};
         padding: 12px 16px;
         border-radius: 6px;
     }}
+
     [data-testid="stMetricLabel"] {{ color: {pal.GREY}; }}
+
     h1, h2, h3 {{ letter-spacing: 0.5px; }}
     hr {{ border-color: {pal.BORDER}; }}
-    button[data-baseweb="tab"] {{
-        font-size: 20px;
-        padding: 14px 32px;
-        height: auto;
-        background-color: {pal.CARD};
-        border-radius: 8px 8px 0 0;
-        margin-right: 8px;
-        transition: all 0.2s ease;
-    }}
-     button[data-baseweb="tab"]:hover {{
-        background-color: {pal.NETFLIX_RED};
-        color: white;
-        transform: translateY(-3px);
-        
-    }}
-    button[data-baseweb="tab"][aria-selected="true"] {{
-        background-color: {pal.NETFLIX_RED};
-        color: white;
-    }}
-    button[data-baseweb="tab"] p {{
-        font-size: 20px;
-        font-weight: 600;
-    }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -115,7 +143,6 @@ ids = f["title_id"]
 st.markdown(
     f"<h1 style='color:{pal.NETFLIX_RED}'>Netflix Content Intelligence</h1>",
     unsafe_allow_html=True,
-    
 )
 st.caption("Data source: netflix_analysis.db")
 
