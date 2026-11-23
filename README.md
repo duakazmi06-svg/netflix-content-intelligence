@@ -92,3 +92,28 @@ netflix-content-intelligence/
 ├── .env.example
 └── README.md
 ```
+
+
+## How to run the project
+
+Install the libraries:
+
+    python -m pip install -r requirements.txt
+
+Run the tests:
+
+    python -m pytest -q
+
+Clean and validate the TMDB data:
+
+    python -m src.transform
+
+Rebuild the database from the existing extract (no internet needed):
+
+    python -m src.run_pipeline --skip-extract
+
+Run the web app locally:
+
+    streamlit run app/app.py
+
+The database is written to `data/netflix_analysis.db`, and the cleaned files are in `data/processed/`.
