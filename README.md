@@ -49,7 +49,22 @@ Get a free TMDB key at https://www.themoviedb.org/settings/api.
 
 **Kaggle fallback:** download "Netflix Movies and TV Shows" from Kaggle and save it as `data/raw/netflix_titles.csv`. Used automatically when no TMDB key is set or the API fails.
 
-## Running the extract stage
+## Running the full pipeline
+
+```bash
+python -m src.run_pipeline --skip-extract          # rebuild the database from data/raw/extracted_latest.csv (no API key needed)
+python -m src.run_pipeline --source tmdb --max-pages 50   # fresh TMDB extract + transform + validate + load
+```
+
+The committed database is `data/netflix_analysis.db` (1,809 titles from the 2,000-title TMDB extract after removing 191 duplicates).
+
+## Running the app locally
+
+```bash
+streamlit run app/app.py
+```
+
+## Running the extract stage on its own
 
 ```bash
 python -m src.extract                              # TMDB if key set, otherwise Kaggle
@@ -69,7 +84,7 @@ python -m pytest -q
 ## Team workflow
 
 - Work on your own branch (`extract`, `transform`, `load`, `deploy`) and only edit your own files.
-- Each person keeps their charts in their own notebook (`notebooks/eda_<name>.ipynb`); they are merged into `eda.ipynb` at the end.
+- Each person keeps their charts in their own notebook (`notebooks/eda_<name>.ipynb`).
 - Open a pull request to `main` when your part works. One teammate reviews, then merge.
 - Until the upstream stage is ready, use the Kaggle CSV as your input.
 
