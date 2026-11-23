@@ -1,8 +1,10 @@
 import sqlite3
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 import palette as pal
@@ -118,6 +120,19 @@ def counts(series, label, n=10):
     return series.value_counts().head(n).rename_axis(label).reset_index(name="total")
 
 
+def kde_curve(values, grid):
+    """Smooth density curve (same idea as seaborn kdeplot), no scipy needed."""
+    v = np.asarray(values, dtype=float)
+    v = v[~np.isnan(v)]
+    if len(v) < 2:
+        return None
+    bw = 1.06 * v.std() * len(v) ** (-1 / 5)
+    if bw == 0:
+        bw = 0.1
+    z = (grid[:, None] - v[None, :]) / bw
+    return np.exp(-0.5 * z ** 2).sum(axis=1) / (len(v) * bw * np.sqrt(2 * np.pi))
+
+
 titles = load_table("titles")
 genres = load_table("genres")
 title_genres = load_table("title_genres")
@@ -155,7 +170,7 @@ c4.metric("Languages", f["language"].nunique())
 st.divider()
 
 # ---------- Tabs ----------
-tab1, tab2, tab3 = st.tabs(["Overview", "Trend", "Table"])
+tab1, tab2, tab3, tab4 = st.tabs(["Overview", "Trend", "Ratings", "Table"])
 
 with tab1:
     left, right = st.columns(2)
@@ -236,6 +251,117 @@ with tab2:
     st.plotly_chart(fig, use_container_width=True)
 
 with tab3:
+    # Chart 7: Rating density, movies vs TV (smooth curves, like the notebook)
+    st.subheader("Rating density: movies vs TV shows")
+    grid = np.linspace(0, 10, 300)
+    colors = {"movie": pal.PIE_RED, "tv": pal.PIE_WHITE}
+    fig = go.Figure()
+    for m in sorted(f["media_type"].dropna().unique()):
+        y = kde_curve(f.loc[f["media_type"] == m, "vote_average"], grid)
+        if y is None:
+            continue
+        fig.add_trace(
+            go.Scatter(
+                x=grid,
+                y=y,
+                mode="lines",
+                name=m,
+                fill="tozeroy",
+                opacity=0.7,
+                line=dict(color=colors.get(m, pal.NETFLIX_RED), width=2),
+            )
+        )
+    fig.update_layout(
+        plot_bgcolor=pal.CHART_BG,
+        paper_bgcolor=pal.CHART_BG,
+        font_color=pal.WHITE,
+        margin=dict(l=10, r=10, t=10, b=10),
+    )
+    fig.update_xaxes(gridcolor=pal.BORDER, zerolinecolor=pal.BORDER, title="rating")
+    fig.update_yaxes(gridcolor=pal.BORDER, zerolinecolor=pal.BORDER, title="density")
+    st.plotly_chart(fig, use_container_width=True)
+
+    rated = f["vote_average"].dropna()
+    if len(rated):
+        med = f.groupby("media_type")["vote_average"].median()
+        med_text = ", ".join(f"{k}: {v:.2f}" for k, v in med.items())
+        share = rated.between(6, 8).mean() * 100
+        low = (rated < 5).mean() * 100
+        high = (rated >= 8).mean() * 100
+        lines = [
+            f"- {share:.0f}% of titles are rated between 6 and 8, so most content sits in the middle-to-good range.",
+            f"- Median rating by type: {med_text}.",
+            f"- Only {low:.0f}% of titles score below 5, while {high:.0f}% score 8 or higher.",
+        ]
+        if len(med) == 2:
+            top_t = med.idxmax()
+            gap = med.max() - med.min()
+            lines[1] += f" {top_t} titles are rated higher by {gap:.2f} points."
+        st.markdown("**Insights**\n" + "\n".join(lines))
+
+    # Chart 10: Popularity vs rating
+    st.subheader("Popularity vs rating")
+    pop_col = "popularity" if "popularity" in f.columns else "vote_count"
+    d = f.dropna(subset=[pop_col, "vote_average"])
+    fig = px.scatter(
+        d,
+        x=pop_col,
+        y="vote_average",
+        log_x=True,
+        opacity=0.5,
+        hover_data=["title"],
+    )
+    st.plotly_chart(style(fig), use_container_width=True)
+
+    if len(d) > 2:
+        r = d[pop_col].rank().corr(d["vote_average"].rank())
+        strength = "weak" if abs(r) < 0.3 else "moderate" if abs(r) < 0.6 else "strong"
+        direction = "positive" if r > 0 else "negative"
+        cut = d[pop_col].quantile(0.9)
+        top_avg = d[d[pop_col] >= cut]["vote_average"].mean()
+        rest_avg = d[d[pop_col] < cut]["vote_average"].mean()
+        best = d.loc[d[pop_col].idxmax()]
+        label = pop_col.replace("_", " ")
+        st.markdown(
+            "**Insights**\n"
+            f"- There is a {strength} {direction} relationship between {label} and rating "
+            f"(Spearman correlation = {r:.2f}).\n"
+            f"- The top 10% most {label} titles average {top_avg:.2f}, compared with {rest_avg:.2f} for the rest.\n"
+            f"- The title with the highest {label} is {best['title']} (rating {best['vote_average']:.1f})."
+        )
+
+    # Chart 11: Average rating by genre
+    st.subheader("Average rating by genre")
+    gr = (
+        title_genres[title_genres["title_id"].isin(ids)]
+        .merge(genres, on="genre_id")
+        .merge(f[["title_id", "vote_average"]], on="title_id")
+    )
+    avg = (
+        gr.groupby("genre_name")["vote_average"]
+        .agg(avg_rating="mean", n="count")
+        .reset_index()
+    )
+    avg = avg[avg["n"] >= 10].sort_values("avg_rating", ascending=False)
+    fig = px.bar(avg, x="genre_name", y="avg_rating")
+    fig.update_yaxes(range=[0, 10], title="average rating")
+    fig.update_xaxes(title="genre")
+    st.plotly_chart(style(fig), use_container_width=True)
+
+    if len(avg):
+        best, worst = avg.iloc[0], avg.iloc[-1]
+        overall = f["vote_average"].mean()
+        above = int((avg["avg_rating"] > overall).sum())
+        st.markdown(
+            "**Insights**\n"
+            f"- {best['genre_name']} has the highest average rating ({best['avg_rating']:.2f}) "
+            f"and {worst['genre_name']} has the lowest ({worst['avg_rating']:.2f}), a gap of "
+            f"{best['avg_rating'] - worst['avg_rating']:.2f} points.\n"
+            f"- {above} of {len(avg)} genres are rated above the overall average of {overall:.2f}.\n"
+            f"- Only genres with at least 10 titles are shown, so small genres do not distort the result."
+        )
+
+with tab4:
     st.subheader("Top rated titles")
     top = (
         f[f["vote_count"] >= 50]
