@@ -19,6 +19,44 @@ KNOWN_GENRES = {
     "War & Politics", "Western",
 }
 
+# Kaggle's "listed_in" categories mapped to the TMDB genre names above, so both
+# sources share one genre vocabulary. Categories that describe origin or format
+# rather than a genre (e.g. "International Movies", "TV Shows") map to [] and
+# are dropped; every other genre in the title is kept.
+KAGGLE_GENRE_MAP = {
+    "Dramas": ["Drama"], "TV Dramas": ["Drama"],
+    "Comedies": ["Comedy"], "TV Comedies": ["Comedy"], "Stand-Up Comedy": ["Comedy"],
+    "Stand-Up Comedy & Talk Shows": ["Comedy", "Talk"],
+    "Documentaries": ["Documentary"], "Docuseries": ["Documentary"],
+    "Science & Nature TV": ["Documentary"],
+    "Action & Adventure": ["Action & Adventure"], "TV Action & Adventure": ["Action & Adventure"],
+    "Children & Family Movies": ["Family"], "Kids' TV": ["Kids"],
+    "Romantic Movies": ["Romance"], "Romantic TV Shows": ["Romance"],
+    "Thrillers": ["Thriller"], "TV Thrillers": ["Thriller"],
+    "Crime TV Shows": ["Crime"], "TV Mysteries": ["Mystery"],
+    "Horror Movies": ["Horror"], "TV Horror": ["Horror"],
+    "Music & Musicals": ["Music"], "Reality TV": ["Reality"],
+    "Sci-Fi & Fantasy": ["Sci-Fi & Fantasy"], "TV Sci-Fi & Fantasy": ["Sci-Fi & Fantasy"],
+    "Anime Series": ["Animation"], "Anime Features": ["Animation"],
+    # origin / format labels, not genres
+    "International Movies": [], "International TV Shows": [], "Independent Movies": [],
+    "British TV Shows": [], "Spanish-Language TV Shows": [], "Korean TV Shows": [],
+    "Classic Movies": [], "Cult Movies": [], "Classic & Cult TV": [], "LGBTQ Movies": [],
+    "Teen TV Shows": [], "Sports Movies": [], "Faith & Spirituality": [],
+    "Movies": [], "TV Shows": [],
+}
+
+
+def map_kaggle_genres(genres: List[str]) -> List[str]:
+    """Translate Kaggle categories to TMDB genres (unknown names are kept, so the
+    validator still flags them). Duplicates are removed, order is preserved."""
+    out: List[str] = []
+    for g in genres:
+        for mapped in KAGGLE_GENRE_MAP.get(g, [g]):
+            if mapped not in out:
+                out.append(mapped)
+    return out
+
 
 class Title(BaseModel):
     """One title. Field(...) rules are the checks; a failing check becomes a rejection reason."""

@@ -72,3 +72,14 @@ def test_missing_runtime_is_accepted_but_zero_runtime_is_not():
     assert Title(**valid_kwargs(runtime=None)).runtime is None
     with pytest.raises(ValidationError):
         Title(**valid_kwargs(runtime=0))
+
+
+def test_kaggle_genres_map_to_tmdb_names():
+    from src.models import KNOWN_GENRES, KAGGLE_GENRE_MAP, map_kaggle_genres
+    assert map_kaggle_genres(["Dramas", "International Movies"]) == ["Drama"]
+    assert map_kaggle_genres(["Comedies", "TV Comedies"]) == ["Comedy"]          # no duplicates
+    assert map_kaggle_genres(["Stand-Up Comedy & Talk Shows"]) == ["Comedy", "Talk"]
+    assert map_kaggle_genres(["Movies"]) == []                                   # format label dropped
+    assert map_kaggle_genres(["Not A Genre"]) == ["Not A Genre"]                 # validator still catches it
+    for targets in KAGGLE_GENRE_MAP.values():                                    # every target is a real genre
+        assert set(targets) <= KNOWN_GENRES

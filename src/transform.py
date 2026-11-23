@@ -21,7 +21,7 @@ import pandas as pd
 from pydantic import ValidationError
 
 from src.contract import CONTRACT_COLUMNS, LATEST_EXTRACT_PATH
-from src.models import Title
+from src.models import Title, map_kaggle_genres
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
@@ -117,6 +117,11 @@ def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
     df["genres"] = df["genres"].apply(
         lambda s: [g.strip() for g in s.split("|") if g.strip()] if s else []
     )
+    # Kaggle uses its own category names ("Dramas", "Kids' TV" ...); translate
+    # them to TMDB genre names so validation and the charts treat both alike.
+    if "source" in df.columns:
+        is_kaggle = df["source"] == "kaggle"
+        df.loc[is_kaggle, "genres"] = df.loc[is_kaggle, "genres"].apply(map_kaggle_genres)
     return df
 
 
